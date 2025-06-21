@@ -6,6 +6,8 @@ Simple Solana for Node.js
 npm i like-solana
 ```
 
+Need support? Join the community: https://lucasbarrena.com
+
 ## Usage
 
 ```js
