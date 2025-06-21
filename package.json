@@ -1,6 +1,6 @@
 {
   "name": "like-solana",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Simple Solana for Node.js",
   "main": "index.js",
   "files": [
