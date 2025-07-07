@@ -15,6 +15,10 @@ const RecentBlockhash = require('./lib/recent-blockhash.js')
 const Watch = require('./lib/watch.js')
 
 module.exports = class Solana {
+  constructor (rpc) {
+    this.rpc = rpc || new RPC()
+  }
+
   static Keypair = crypto.Keypair
   static PublicKey = PublicKey
 
@@ -138,6 +142,41 @@ module.exports = class Solana {
     const encoded = maybeEncodeTransaction(transaction)
 
     return bs58.encode(Buffer.from(encoded, 'base64').slice(1, 65))
+  }
+
+  async getBalance (owner) {
+    return this.rpc.getBalance(owner)
+  }
+
+  async getTokenBalance (owner, tokenAddress) {
+    const associatedUser = TokenProgram.getAssociatedTokenAddressSync(new PublicKey(tokenAddress), new PublicKey(owner), false)
+    let tokenAccount = null
+
+    try {
+      tokenAccount = await TokenProgram.getAccount(this.rpc, associatedUser)
+    } catch (err) {
+      if (err.toString().includes('TokenAccountNotFoundError')) {
+        return 0n
+      }
+
+      throw err
+    }
+
+    return tokenAccount.amount
+  }
+
+  async getTokens (owner, opts = {}) {
+    const tokenAccounts = await this.rpc.getTokenAccountsByOwner(owner, {
+      programId: opts.programId || TokenProgram.TOKEN_PROGRAM_ID
+    }, { encoding: 'jsonParsed' })
+
+    return tokenAccounts.map(acc => {
+      return {
+        mint: acc.account.data.parsed.info.mint,
+        amount: BigInt(acc.account.data.parsed.info.tokenAmount.amount),
+        decimals: acc.account.data.parsed.info.tokenAmount.decimals
+      }
+    }).filter(token => token.amount > 0n)
   }
 }
 

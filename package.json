@@ -33,7 +33,7 @@
     "solana-crypto": "^1.0.1",
     "solana-event-parser": "^1.0.1",
     "solana-public-key": "^1.0.1",
-    "solana-rpc": "^2.0.2",
+    "solana-rpc": "^2.6.0",
     "solana-system-program": "^1.0.0",
     "solana-token-program": "^1.0.0",
     "solana-transaction-instruction": "^1.0.1"
