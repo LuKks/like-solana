@@ -178,6 +178,31 @@ module.exports = class Solana {
       }
     }).filter(token => token.amount > 0n)
   }
+
+  transfer (from, to, units) {
+    from = new PublicKey(from)
+    to = new PublicKey(to)
+
+    return SystemProgram.transfer({
+      fromPubkey: from,
+      toPubkey: to,
+      lamports: units
+    })
+  }
+
+  async transferBalance (from, to) {
+    from = new PublicKey(from)
+    to = new PublicKey(to)
+
+    const balance = await this.rpc.getBalance(from)
+    const units = BigInt(balance) - 5000n
+
+    if (units <= 0) {
+      throw new Error('Balance is not enough for transfer')
+    }
+
+    return this.transfer(from, to, units)
+  }
 }
 
 function toAmount (units, decimals) {
