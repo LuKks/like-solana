@@ -179,29 +179,28 @@ module.exports = class Solana {
     }).filter(token => token.amount > 0n)
   }
 
-  transfer (from, to, units) {
+  async transfer (from, to, units) {
     from = new PublicKey(from)
     to = new PublicKey(to)
+
+    if (units === Infinity) {
+      const balance = await this.rpc.getBalance(from)
+      const lamports = BigInt(balance) - 5000n
+
+      if (lamports <= 0) {
+        throw new Error('Balance is not enough for transfer')
+      }
+
+      units = lamports
+    } else {
+      units = normalizeLamports(units)
+    }
 
     return SystemProgram.transfer({
       fromPubkey: from,
       toPubkey: to,
       lamports: units
     })
-  }
-
-  async transferBalance (from, to) {
-    from = new PublicKey(from)
-    to = new PublicKey(to)
-
-    const balance = await this.rpc.getBalance(from)
-    const units = BigInt(balance) - 5000n
-
-    if (units <= 0) {
-      throw new Error('Balance is not enough for transfer')
-    }
-
-    return this.transfer(from, to, units)
   }
 }
 
@@ -217,6 +216,12 @@ function toUnits (amount, decimals) {
   const units = d.mul(10 ** decimals)
 
   return units.toFixed(0)
+}
+
+function normalizeLamports (lamports) {
+  if (typeof lamports === 'number') return BigInt((lamports * 1e9).toFixed(0))
+  if (typeof lamports !== 'bigint') return BigInt(lamports)
+  return lamports
 }
 
 function maybeEncodeTransaction (tx) {

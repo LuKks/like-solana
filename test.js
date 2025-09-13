@@ -18,6 +18,8 @@ test('basic', async function (t) {
 
   const tx = SOL.sign(ixTransfer, { unitPrice: 0, signers: [user], recentBlockhash: latest.blockhash })
 
+  t.comment(SOL.signature(tx))
+
   const signature = await rpc.sendTransaction(tx, { confirmed: true })
 
   console.log(signature)
