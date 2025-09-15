@@ -24,3 +24,17 @@ test('basic', async function (t) {
 
   console.log(signature)
 })
+
+test('transact', async function (t) {
+  const sol = new SOL({ key: process.env.WALLET_SECRET_KEY })
+
+  const ixTransfer = SOL.SystemProgram.transfer({
+    fromPubkey: sol.keyPair.publicKey,
+    toPubkey: sol.keyPair.publicKey,
+    lamports: 0.0001337 * 1e9
+  })
+
+  const signature = await sol.transact(ixTransfer, { confirmed: true })
+
+  t.comment(signature)
+})

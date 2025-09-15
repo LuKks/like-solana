@@ -15,8 +15,15 @@ const RecentBlockhash = require('./lib/recent-blockhash.js')
 const Watch = require('./lib/watch.js')
 
 module.exports = class Solana {
-  constructor (rpc) {
-    this.rpc = rpc || new RPC()
+  constructor (opts = {}) {
+    // Compat options, was just internal usage will be removed sooner or later
+    if (opts && opts.socket) {
+      opts = { rpc: opts }
+    }
+
+    this.rpc = opts.rpc || new RPC()
+    this.keyPair = opts.keyPair || new crypto.Keypair(opts.key)
+    this.recentBlockhash = opts.recentBlockhash || null
   }
 
   static Keypair = crypto.Keypair
@@ -201,6 +208,25 @@ module.exports = class Solana {
       toPubkey: to,
       lamports: units
     })
+  }
+
+  async transact (tx, opts = {}) {
+    const recentBlockhash = opts.recentBlockhash || this.recentBlockhash || (await this.rpc.getLatestBlockhash()).blockhash
+    const signers = opts.signers || (Array.isArray(opts.keyPair) ? opts.keyPair : [opts.keyPair || this.keyPair])
+
+    const signed = Solana.sign(tx, {
+      unitPrice: opts.unitPrice || 0,
+      payer: opts.payer || null,
+      signers,
+      recentBlockhash
+    })
+
+    const signature = await this.rpc.sendTransaction(signed, {
+      confirmed: opts.confirmed,
+      finalized: opts.finalized
+    })
+
+    return signature
   }
 }
 
