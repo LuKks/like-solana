@@ -49,3 +49,9 @@ test('sol balance change', async function (t) {
 
   t.alike(balance, { pre: 271287074n, post: 21207074n, diff: -250080000n })
 })
+
+test('get holders', async function (t) {
+  const sol = new SOL()
+
+  console.log(await sol.holders('2fWkVf417bfxEgUemymkYNagXVitnmNxvq7dhUwnpump'))
+})

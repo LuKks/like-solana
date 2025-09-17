@@ -254,6 +254,30 @@ module.exports = class Solana {
       diff: BigInt(tx.meta.postBalances[accountIndex] - tx.meta.preBalances[accountIndex])
     }
   }
+
+  async holders (mint) {
+    const programAccounts = await this.rpc.request('getProgramAccounts', [
+      TokenProgram.TOKEN_PROGRAM_ID,
+      {
+        dataSlice: { offset: 64, length: 8 },
+        filters: [
+          { dataSize: 165 },
+          { memcmp: { offset: 0, bytes: mint.toString() } }
+        ],
+        encoding: 'jsonParsed'
+      }
+    ])
+
+    const accounts = programAccounts.map(acc => {
+      return {
+        owner: acc.account.data.parsed.info.owner,
+        amount: BigInt(acc.account.data.parsed.info.tokenAmount.amount),
+        decimals: acc.account.data.parsed.info.tokenAmount.decimals
+      }
+    }).filter(account => account.amount > 0n)
+
+    return accounts
+  }
 }
 
 function toAmount (units, decimals) {
