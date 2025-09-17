@@ -238,10 +238,10 @@ module.exports = class Solana {
 
     const accountIndex = tx.transaction.message.accountKeys.findIndex(accountKey => {
       if (typeof accountKey === 'object' && accountKey && accountKey.pubkey) {
-        return accountKey.pubkey === account
+        return accountKey.pubkey === account.toString()
       }
 
-      return accountKey === account
+      return accountKey === account.toString()
     })
 
     if (accountIndex === -1) {
