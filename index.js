@@ -203,6 +203,8 @@ module.exports = class Solana {
       units = normalizeLamports(units)
     }
 
+    // TODO: Should transact by default
+
     return SystemProgram.transfer({
       fromPubkey: from,
       toPubkey: to,
@@ -248,10 +250,17 @@ module.exports = class Solana {
       throw new Error('Account not found')
     }
 
+    const preTokenBalance = tx.meta.preTokenBalances.find(pre => pre.owner.toString() === account.toString() && pre.mint.toString() === Solana.NATIVE_MINT.toString())
+    const postTokenBalance = tx.meta.postTokenBalances.find(post => post.owner.toString() === account.toString() && post.mint.toString() === Solana.NATIVE_MINT.toString())
+
     return {
       pre: BigInt(tx.meta.preBalances[accountIndex]),
       post: BigInt(tx.meta.postBalances[accountIndex]),
-      diff: BigInt(tx.meta.postBalances[accountIndex] - tx.meta.preBalances[accountIndex])
+      diff: BigInt(tx.meta.postBalances[accountIndex] - tx.meta.preBalances[accountIndex]),
+
+      preWrap: BigInt(preTokenBalance.uiTokenAmount.amount),
+      postWrap: BigInt(postTokenBalance.uiTokenAmount.amount),
+      diffWrap: BigInt(postTokenBalance.uiTokenAmount.amount) - BigInt(preTokenBalance.uiTokenAmount.amount)
     }
   }
 
