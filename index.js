@@ -285,6 +285,8 @@ module.exports = class Solana {
       }
     }).filter(account => account.amount > 0n)
 
+    accounts.sort((a, b) => Number(b.amount - a.amount))
+
     return accounts
   }
 }
