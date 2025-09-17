@@ -228,6 +228,26 @@ module.exports = class Solana {
 
     return signature
   }
+
+  async balanceFromTransaction (signature, account) {
+    const tx = await this.rpc.getTransaction(signature)
+
+    if (tx.version !== 'legacy') {
+      throw new Error('Versioned transaction not supported')
+    }
+
+    const accountIndex = tx.transaction.message.accountKeys.findIndex(accountKey => accountKey === account)
+
+    if (accountIndex === -1) {
+      throw new Error('Account not found')
+    }
+
+    return {
+      pre: BigInt(tx.meta.preBalances[accountIndex]),
+      post: BigInt(tx.meta.postBalances[accountIndex]),
+      diff: BigInt(tx.meta.postBalances[accountIndex] - tx.meta.preBalances[accountIndex])
+    }
+  }
 }
 
 function toAmount (units, decimals) {

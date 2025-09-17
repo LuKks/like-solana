@@ -38,3 +38,14 @@ test('transact', async function (t) {
 
   t.comment(signature)
 })
+
+test('sol balance change', async function (t) {
+  const sol = new SOL()
+
+  const signature = 'cwmoaZdjHtAWnuhUa9T8ykgn3SAQRRRdJEfAfminnmRxqugA9wEpQ4gQosDs4MnUyMXqVbviFgbYc71jHNJGAYy'
+  const account = 'J7UjDnNnvsBMY1c1JiAzwVjGnFaqdSZHYpmpHfMwDncg'
+
+  const balance = await sol.balanceFromTransaction(signature, account)
+
+  t.alike(balance, { pre: 271287074n, post: 21207074n, diff: -250080000n })
+})
