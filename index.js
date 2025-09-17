@@ -236,7 +236,13 @@ module.exports = class Solana {
       throw new Error('Versioned transaction not supported')
     }
 
-    const accountIndex = tx.transaction.message.accountKeys.findIndex(accountKey => accountKey === account)
+    const accountIndex = tx.transaction.message.accountKeys.findIndex(accountKey => {
+      if (typeof accountKey === 'object' && accountKey && accountKey.pubkey) {
+        return accountKey.pubkey === account
+      }
+
+      return accountKey === account
+    })
 
     if (accountIndex === -1) {
       throw new Error('Account not found')
