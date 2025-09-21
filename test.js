@@ -5,7 +5,7 @@ const SOL = require('./index.js')
 dotenv.config({ path: require('os').homedir() + '/.env' })
 
 test('basic', async function (t) {
-  const rpc = new SOL.RPC({ commitment: 'processed' })
+  const rpc = new SOL.RPC()
   const user = new SOL.Keypair(process.env.WALLET_SECRET_KEY)
 
   const latest = await rpc.getLatestBlockhash()
@@ -16,13 +16,13 @@ test('basic', async function (t) {
     lamports: 0.0001337 * 1e9
   })
 
-  const tx = SOL.sign(ixTransfer, { unitPrice: 0, signers: [user], recentBlockhash: latest.blockhash })
+  const tx = SOL.sign(ixTransfer, { unitPrice: 0.00005, signers: [user], recentBlockhash: latest.blockhash })
 
   t.comment(SOL.signature(tx))
 
   const signature = await rpc.sendTransaction(tx, { confirmed: true })
 
-  console.log(signature)
+  t.is(signature, SOL.signature(tx))
 })
 
 test('transact', async function (t) {
@@ -34,7 +34,19 @@ test('transact', async function (t) {
     lamports: 0.0001337 * 1e9
   })
 
-  const signature = await sol.transact(ixTransfer, { confirmed: true })
+  const signature = await sol.transact(ixTransfer, { unitPrice: 0.00005, confirmed: true })
 
   t.comment(signature)
+})
+
+test('wrap and unwrap WSOL', async function (t) {
+  const sol = new SOL({ key: process.env.WALLET_SECRET_KEY })
+
+  const sig1 = await sol.wrap(0.0001337, { transact: { confirmed: true } })
+
+  t.comment(sig1)
+
+  const sig2 = await sol.unwrap({ transact: { confirmed: true } })
+
+  t.comment(sig2)
 })

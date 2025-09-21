@@ -26,6 +26,14 @@ module.exports = class Solana {
     this.recentBlockhash = opts.recentBlockhash || null
   }
 
+  get publicKey () {
+    return this.keyPair.publicKey.toString()
+  }
+
+  get secretKey () {
+    return bs58.encode(Buffer.from(this.keyPair.secretKey))
+  }
+
   static Keypair = crypto.Keypair
   static PublicKey = PublicKey
 
@@ -210,6 +218,59 @@ module.exports = class Solana {
       toPubkey: to,
       lamports: units
     })
+  }
+
+  ata (mint) {
+    return TokenProgram.getAssociatedTokenAddressSync(mint, this.keyPair.publicKey)
+  }
+
+  createAccountIX (mint) {
+    return TokenProgram.createAssociatedTokenAccountIdempotentInstruction(this.keyPair.publicKey, this.ata(mint), this.keyPair.publicKey, mint)
+  }
+
+  closeAccountIX (mint) {
+    return TokenProgram.createCloseAccountInstruction(this.ata(mint), this.keyPair.publicKey, this.keyPair.publicKey)
+  }
+
+  syncNativeIX (mint) {
+    return TokenProgram.createSyncNativeInstruction(this.ata(mint))
+  }
+
+  async wrap (amount, opts = {}) {
+    amount = normalizeLamports(amount)
+
+    const ixs = []
+
+    ixs.push(this.createAccountIX(Solana.NATIVE_MINT))
+
+    if (amount) {
+      ixs.push(SystemProgram.transfer({
+        fromPubkey: this.keyPair.publicKey,
+        toPubkey: this.ata(Solana.NATIVE_MINT),
+        lamports: amount
+      }))
+
+      ixs.push(this.syncNativeIX(Solana.NATIVE_MINT))
+    }
+
+    if (opts.transact === false) {
+      return ixs
+    }
+
+    return this.transact(ixs, { unitPrice: 0.0005, ...opts.transact })
+  }
+
+  async unwrap (opts = {}) {
+    const ixs = []
+
+    ixs.push(this.createAccountIX(Solana.NATIVE_MINT))
+    ixs.push(this.closeAccountIX(Solana.NATIVE_MINT))
+
+    if (opts.transact === false) {
+      return ixs
+    }
+
+    return this.transact(ixs, { unitPrice: 0.0005, ...opts.transact })
   }
 
   async transact (tx, opts = {}) {
