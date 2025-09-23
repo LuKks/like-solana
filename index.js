@@ -121,13 +121,27 @@ module.exports = class Solana {
       signers.push(...opts.signers)
     }
 
-    if (opts.legacy !== false) {
-      tx.sign(...signers)
-    } else {
-      throw new Error('Versioned transaction not supported')
+    try {
+      for (const signer of signers) {
+        if (signer.unprotect && signer.protect) {
+          signer.unprotect()
+        }
+      }
 
-      // TODO
-      // tx.sign(signers)
+      if (opts.legacy !== false) {
+        tx.sign(...signers)
+      } else {
+        throw new Error('Versioned transaction not supported')
+
+        // TODO
+        // tx.sign(signers)
+      }
+    } finally {
+      for (const signer of signers) {
+        if (signer.unprotect && signer.protect) {
+          signer.protect()
+        }
+      }
     }
 
     return tx
