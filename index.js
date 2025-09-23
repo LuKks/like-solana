@@ -75,7 +75,7 @@ module.exports = class Solana {
       tx.add(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: Math.ceil(opts.unitPrice * 1e9) }))
     }
 
-    const txs = Array.isArray(transaction) ? transaction : [transaction]
+    const txs = Array.isArray(transaction) ? transaction.flat() : [transaction]
 
     for (const t of txs) {
       tx.add(t)
