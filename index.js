@@ -194,7 +194,7 @@ module.exports = class Solana {
     }).filter(token => token.amount > 0n)
   }
 
-  async transfer (from, to, units) {
+  async transfer (from, to, units, opts = {}) {
     from = new PublicKey(from)
     to = new PublicKey(to)
 
@@ -207,17 +207,17 @@ module.exports = class Solana {
       }
 
       units = lamports
-    } else {
-      units = normalizeLamports(units)
     }
 
-    // TODO: Should transact by default
+    const ixs = []
 
-    return SystemProgram.transfer({
-      fromPubkey: from,
-      toPubkey: to,
-      lamports: units
-    })
+    ixs.push(this.transferIX(from, to, units))
+
+    if (opts.transact === false) {
+      return ixs
+    }
+
+    return this.transact(ixs, { unitPrice: 0.00001, ...opts.transact })
   }
 
   ata (mint) {
@@ -236,6 +236,14 @@ module.exports = class Solana {
     return TokenProgram.createSyncNativeInstruction(this.ata(mint))
   }
 
+  transferIX (from, to, units) {
+    return SystemProgram.transfer({
+      fromPubkey: from,
+      toPubkey: to,
+      lamports: normalizeLamports(units)
+    })
+  }
+
   async wrap (amount, opts = {}) {
     amount = normalizeLamports(amount)
 
@@ -244,12 +252,7 @@ module.exports = class Solana {
     ixs.push(this.createAccountIX(Solana.NATIVE_MINT))
 
     if (amount) {
-      ixs.push(SystemProgram.transfer({
-        fromPubkey: this.keyPair.publicKey,
-        toPubkey: this.ata(Solana.NATIVE_MINT),
-        lamports: amount
-      }))
-
+      ixs.push(this.transferIX(this.keyPair.publicKey, this.ata(Solana.NATIVE_MINT), amount))
       ixs.push(this.syncNativeIX(Solana.NATIVE_MINT))
     }
 

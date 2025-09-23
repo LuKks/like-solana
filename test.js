@@ -1,3 +1,4 @@
+const fs = require('fs')
 const test = require('brittle')
 const dotenv = require('dotenv')
 const SOL = require('./index.js')
@@ -37,6 +38,14 @@ test('transact', async function (t) {
   const signature = await sol.transact(ixTransfer, { unitPrice: 0.00005, confirmed: true })
 
   t.comment(signature)
+})
+
+test('transfer', async function (t) {
+  const sol = new SOL({ key: process.env.WALLET_SECRET_KEY })
+
+  const sig = await sol.transfer(sol.keyPair.publicKey, sol.keyPair.publicKey, 0.0001337, { transact: { confirmed: true } })
+
+  t.comment(sig)
 })
 
 test('wrap and unwrap WSOL', async function (t) {
