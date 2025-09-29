@@ -24,6 +24,8 @@ module.exports = class Solana {
     this.rpc = opts.rpc || new RPC()
     this.keyPair = opts.keyPair || new crypto.Keypair(opts.key)
     this.recentBlockhash = opts.recentBlockhash || null
+
+    this.crypto = opts.crypto || null
   }
 
   get publicKey () {
@@ -63,7 +65,7 @@ module.exports = class Solana {
   static Watch = Watch
 
   static sign (transaction, opts = {}) {
-    const tx = new Transaction()
+    const tx = new Transaction({ crypto: opts.crypto })
 
     const payer = new PublicKey(opts.payer || opts.signers[0].publicKey)
 
@@ -298,7 +300,8 @@ module.exports = class Solana {
       unitPrice: opts.unitPrice || 0,
       payer: opts.payer || null,
       signers,
-      recentBlockhash
+      recentBlockhash,
+      crypto: this.crypto
     })
 
     const signature = await this.rpc.sendTransaction(signed, {
