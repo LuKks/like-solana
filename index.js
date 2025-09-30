@@ -328,17 +328,20 @@ module.exports = class Solana {
       throw new Error('Account not found')
     }
 
+    const preBalance = tx.meta.preBalances[accountIndex] || 0n
+    const postBalance = tx.meta.postBalances[accountIndex] || 0n
+
     const preTokenBalance = tx.meta.preTokenBalances.find(pre => pre.owner.toString() === account.toString() && pre.mint.toString() === Solana.NATIVE_MINT.toString())
     const postTokenBalance = tx.meta.postTokenBalances.find(post => post.owner.toString() === account.toString() && post.mint.toString() === Solana.NATIVE_MINT.toString())
 
     return {
-      pre: BigInt(tx.meta.preBalances[accountIndex]),
-      post: BigInt(tx.meta.postBalances[accountIndex]),
-      diff: BigInt(tx.meta.postBalances[accountIndex] - tx.meta.preBalances[accountIndex]),
+      pre: BigInt(preBalance),
+      post: BigInt(postBalance),
+      diff: BigInt(postBalance - preBalance),
 
-      preWrap: BigInt(preTokenBalance.uiTokenAmount.amount),
-      postWrap: BigInt(postTokenBalance.uiTokenAmount.amount),
-      diffWrap: BigInt(postTokenBalance.uiTokenAmount.amount) - BigInt(preTokenBalance.uiTokenAmount.amount)
+      preWrap: BigInt(preTokenBalance ? preTokenBalance.uiTokenAmount.amount : 0),
+      postWrap: BigInt(postTokenBalance ? postTokenBalance.uiTokenAmount.amount : 0),
+      diffWrap: BigInt(postTokenBalance ? postTokenBalance.uiTokenAmount.amount : 0) - BigInt(preTokenBalance ? preTokenBalance.uiTokenAmount.amount : 0)
     }
   }
 
