@@ -18,7 +18,7 @@ test('basic', async function (t) {
     lamports: 0.0001337 * 1e9
   })
 
-  const tx = SOL.sign(ixTransfer, { unitPrice: 0.00005, signers: [user], recentBlockhash: latest.blockhash })
+  const tx = SOL.sign(ixTransfer, { signers: [user], recentBlockhash: latest.blockhash })
 
   t.comment(SOL.signature(tx))
 
@@ -36,7 +36,7 @@ test('transact', async function (t) {
     lamports: 0.0001337 * 1e9
   })
 
-  const signature = await sol.transact(ixTransfer, { unitPrice: 0.00005, confirmed: true })
+  const signature = await sol.transact(ixTransfer, { confirmed: true })
 
   t.comment(signature)
 })

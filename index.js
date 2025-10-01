@@ -231,7 +231,7 @@ module.exports = class Solana {
       return ixs
     }
 
-    return this.transact(ixs, { unitPrice: 0.00001, ...opts.transact })
+    return this.transact(ixs, { ...opts.transact })
   }
 
   ata (mint) {
@@ -274,7 +274,7 @@ module.exports = class Solana {
       return ixs
     }
 
-    return this.transact(ixs, { unitPrice: 0.0005, ...opts.transact })
+    return this.transact(ixs, { ...opts.transact })
   }
 
   async unwrap (opts = {}) {
@@ -287,7 +287,7 @@ module.exports = class Solana {
       return ixs
     }
 
-    return this.transact(ixs, { unitPrice: 0.0005, ...opts.transact })
+    return this.transact(ixs, { ...opts.transact })
   }
 
   async transact (tx, opts = {}) {
