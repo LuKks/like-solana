@@ -312,6 +312,10 @@ module.exports = class Solana {
   async balanceFromTransaction (signature, account) {
     const tx = await this.rpc.getTransaction(signature)
 
+    if (!tx) {
+      throw new Error('Transaction not found: ' + signature)
+    }
+
     if (tx.version !== 'legacy') {
       throw new Error('Versioned transaction not supported')
     }
