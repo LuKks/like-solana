@@ -1,4 +1,3 @@
-const fs = require('fs')
 const test = require('require-npm-global')('brittle')
 const dotenv = require('dotenv')
 const SOL = require('./index.js')
