@@ -7,7 +7,7 @@
     "lib"
   ],
   "scripts": {
-    "test": "standard && brittle test.js",
+    "test": "standard && brittle-node test.js",
     "lint": "standard"
   },
   "repository": {
@@ -21,10 +21,8 @@
   },
   "homepage": "https://github.com/lukks/like-solana#readme",
   "devDependencies": {
-    "brittle": "^3.16.3",
     "dotenv": "^16.5.0",
-    "solanas": "^0.0.4",
-    "standard": "^17.1.2"
+    "require-npm-global": "^1.0.0"
   },
   "dependencies": {
     "@solana/buffer-layout": "^4.0.1",
