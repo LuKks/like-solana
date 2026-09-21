@@ -93,8 +93,6 @@ Options:
 }
 ```
 
-Notice: Not compatible with versioned transactions for now.
-
 #### `txEncoded = SOL.toBase64(transaction)`
 
 Serialize a transaction into base64.

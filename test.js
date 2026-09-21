@@ -25,6 +25,27 @@ test.skip('basic', async function (t) {
   t.is(signature, SOL.signature(tx))
 })
 
+test.skip('versioned transaction', async function (t) {
+  const rpc = new SOL.RPC()
+  const user = new SOL.Keypair(process.env.WALLET_SECRET_KEY)
+
+  const latest = await rpc.getLatestBlockhash()
+
+  const ixTransfer = SOL.SystemProgram.transfer({
+    fromPubkey: user.publicKey,
+    toPubkey: user.publicKey,
+    lamports: 0.0001337 * 1e9
+  })
+
+  const tx = SOL.sign(ixTransfer, { signers: [user], recentBlockhash: latest.blockhash, legacy: false })
+
+  t.comment(SOL.signature(tx))
+
+  const signature = await rpc.sendTransaction(tx, { confirmed: true })
+
+  t.is(signature, SOL.signature(tx))
+})
+
 test.skip('transact', async function (t) {
   const sol = new SOL({ key: process.env.WALLET_SECRET_KEY })
 

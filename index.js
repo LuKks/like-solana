@@ -11,6 +11,10 @@ const SystemProgram = require('solana-system-program')
 const ComputeBudgetProgram = require('solana-compute-budget-program')
 const TokenProgram = require('solana-token-program')
 
+const MessageV0 = require('./lib/message-v0.js')
+const VersionedTransaction = require('./lib/versioned-transaction.js')
+const AddressLookupTableAccount = require('./lib/address-lookup-table.js')
+
 const RecentBlockhash = require('./lib/recent-blockhash.js')
 const Watch = require('./lib/watch.js')
 
@@ -46,6 +50,8 @@ module.exports = class Solana {
   static Transaction = Transaction
   static TransactionInstruction = TransactionInstruction
 
+  static VersionedTransaction = VersionedTransaction
+
   static SystemProgram = SystemProgram
   static ComputeBudgetProgram = ComputeBudgetProgram
   static TokenProgram = TokenProgram
@@ -63,7 +69,7 @@ module.exports = class Solana {
   static Watch = Watch
 
   static sign (transaction, opts = {}) {
-    const tx = new Transaction()
+    let tx = new Transaction()
 
     const payer = new PublicKey(opts.payer || opts.signers[0].publicKey)
 
@@ -92,20 +98,20 @@ module.exports = class Solana {
       }))
     }
 
+    const recentBlockhash = typeof opts.recentBlockhash === 'string' ? opts.recentBlockhash : opts.recentBlockhash.toString()
+
     if (opts.legacy !== false) {
       tx.feePayer = payer
-      tx.recentBlockhash = typeof opts.recentBlockhash === 'string' ? opts.recentBlockhash : opts.recentBlockhash.toString()
+      tx.recentBlockhash = recentBlockhash
     } else {
-      throw new Error('Versioned transaction not supported')
-
-      // TODO
-      /* const messageV0 = new TransactionMessage({
+      const message = MessageV0.compile({
         payerKey: payer,
-        recentBlockhash: opts.recentBlockhash,
-        instructions: tx.instructions
-      }).compileToV0Message()
+        instructions: tx.instructions,
+        recentBlockhash,
+        lookupTable: opts.lookupTable
+      })
 
-      tx = new VersionedTransaction(messageV0) */
+      tx = new VersionedTransaction(message)
     }
 
     // TODO
@@ -131,10 +137,7 @@ module.exports = class Solana {
       if (opts.legacy !== false) {
         tx.sign(...signers)
       } else {
-        throw new Error('Versioned transaction not supported')
-
-        // TODO
-        // tx.sign(signers)
+        tx.sign(signers)
       }
     } finally {
       for (const signer of signers) {
@@ -294,11 +297,21 @@ module.exports = class Solana {
     const recentBlockhash = opts.recentBlockhash || this.recentBlockhash || (await this.rpc.getLatestBlockhash()).blockhash
     const signers = opts.signers || (Array.isArray(opts.keyPair) ? opts.keyPair : [opts.keyPair || this.keyPair])
 
+    let lookupTable = null
+
+    if (opts.legacy === false && opts.addressLookupTables) {
+      const addresses = Array.isArray(opts.addressLookupTables) ? opts.addressLookupTables : [opts.addressLookupTables]
+
+      lookupTable = await Promise.all(addresses.map(address => AddressLookupTableAccount.load(this.rpc, new PublicKey(address))))
+    }
+
     const signed = Solana.sign(tx, {
       unitPrice: opts.unitPrice || 0,
       payer: opts.payer || null,
       signers,
-      recentBlockhash
+      recentBlockhash,
+      legacy: opts.legacy,
+      lookupTable
     })
 
     const signature = await this.rpc.sendTransaction(signed, {
@@ -316,11 +329,15 @@ module.exports = class Solana {
       throw new Error('Transaction not found: ' + signature)
     }
 
-    if (tx.version !== 'legacy') {
-      throw new Error('Versioned transaction not supported')
+    if (tx.version !== 'legacy' && tx.version !== 0) {
+      throw new Error('Unsupported transaction version: ' + tx.version)
     }
 
-    const accountIndex = tx.transaction.message.accountKeys.findIndex(accountKey => {
+    const loadedWritable = tx.meta.loadedAddresses ? tx.meta.loadedAddresses.writable : []
+    const loadedReadonly = tx.meta.loadedAddresses ? tx.meta.loadedAddresses.readonly : []
+    const accountKeys = [...tx.transaction.message.accountKeys, ...loadedWritable, ...loadedReadonly]
+
+    const accountIndex = accountKeys.findIndex(accountKey => {
       if (typeof accountKey === 'object' && accountKey && accountKey.pubkey) {
         return accountKey.pubkey === account.toString()
       }
